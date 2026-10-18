@@ -1,0 +1,11 @@
+{
+  "name": "@my-menu/api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}
