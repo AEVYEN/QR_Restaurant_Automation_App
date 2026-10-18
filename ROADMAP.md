@@ -136,13 +136,13 @@ my-menu/
 
 ### 0.2 Kurulum görevleri
 
-- [ ] Git reposu oluştur, `.gitignore`, `.editorconfig`
-- [ ] Monorepo workspace yapısını kur
-- [ ] ESLint + Prettier kur (tek stil kuralı tüm projede)
-- [ ] `docker-compose.yml` ile veritabanını ayağa kaldır (+ isteğe bağlı pgAdmin / Adminer)
-- [ ] `.env.example` dosyası oluştur (gizli bilgiler asla repoya girmez)
-- [ ] `docs/adr/` klasörü ve ilk ADR'ler: veritabanı, framework, repo yapısı
-- [ ] Commit mesajı standardı: **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`...)
+- [x] Git reposu oluştur, `.gitignore`, `.editorconfig`
+- [x] Monorepo workspace yapısını kur
+- [x] ESLint + Prettier kur (tek stil kuralı tüm projede)
+- [x] `docker-compose.yml` ile veritabanını ayağa kaldır (+ isteğe bağlı pgAdmin / Adminer)
+- [x] `.env.example` dosyası oluştur (gizli bilgiler asla repoya girmez)
+- [x] `docs/adr/` klasörü ve ilk ADR'ler: veritabanı, framework, repo yapısı
+- [x] Commit mesajı standardı: **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`...)
 
 ### 0.3 İsimlendirme kuralları
 
@@ -153,7 +153,7 @@ my-menu/
 | Sabit                | UPPER_SNAKE_CASE  | `MAX_ITEMS_PER_ORDER`                       |
 | Dosya                | kebab-case        | `order.service.js`, `product.repository.js` |
 | Veritabanı tablo     | snake_case, çoğul | `orders`, `order_items`                     |
-| Veritabanı kolon     | snake_case        | `created_at`, `unit_price`                  |
+| Veritabanı kolon     | snake_case        | `created_at`, `is_available`                |
 | API route            | kebab-case, çoğul | `/api/v1/order-items`                       |
 | Boolean              | is/has/can ön eki | `isAvailable`, `hasOptions`                 |
 
@@ -177,19 +177,19 @@ my-menu/
 
 > 🛒 **Sepet (Cart) nerede?** Sepet sunucuya gönderilene kadar **istemci tarafında** (React state + localStorage) yaşar. Backend'de ayrı bir modül olmasına başlangıçta gerek yok.
 
-### 1.2 Varlıklar (taslak — veritabanı kararından sonra netleşecek)
+### 1.2 Varlıklar (ADR-001 ile uyumlu)
 
 ```
 Category        : id, name, displayOrder, isActive
 Product         : id, categoryId, name, description, price, imageUrl, isAvailable
 ProductOption   : id, productId, name, extraPrice           (ör. "Ekstra peynir +15₺") — opsiyonel, Faz 14'e kalabilir
-Table           : id, number, isActive
-Order           : id, orderCode, tableId, status, totalAmount, note, createdAt, confirmedAt, confirmedBy
-OrderItem       : id, orderId, productId, productName, unitPrice, quantity, lineTotal
-Staff           : id, fullName, email, passwordHash, role (WAITER | ADMIN)
+Table           : number (PK), isActive
+Order           : id, orderCode, tableNumber, status, note, createdAt, expiresAt, confirmedAt, confirmedBy
+OrderItem       : id, orderId, productId, quantity
+Staff           : id, fullName, username, passwordHash, role (WAITER | ADMIN)
 ```
 
-> ⚠️ **Fiyat anlık görüntüsü (snapshot):** `OrderItem` içinde `productName` ve `unitPrice` **kopyalanır**. Siparişler kısa ömürlü olduğu için bu sadece "sipariş oluşturulduktan sonra, garson onaylamadan önce admin fiyatı değiştirirse" durumunu korur — basit tutulacak.
+> ⚠️ **Fiyat anlık görüntüsü (snapshot) yok:** `OrderItem` içinde `unitPrice` / `productName` tutulmaz, `Order` içinde de `totalAmount` saklanmaz. Tutar her seferinde ürünün **güncel fiyatından** hesaplanır (bkz. ADR-001). Sonuç: sipariş oluşturulduktan sonra, garson onaylamadan önce admin fiyatı değiştirirse toplam da değişir — siparişler kısa ömürlü olduğu için bu kabul edildi.
 
 ### 1.3 Sipariş durum makinesi (Order Status)
 

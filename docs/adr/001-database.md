@@ -16,6 +16,7 @@ Accepted
 - Table 1 ──── N Order (bir masadan çok sipariş gelebilir)
 - Order 1 ──── N OrderItem (bir siparişte çok kalem var)
 - Product 1 ──── N OrderItem (bir ürün birçok siparişte yer alabilir)
+- Staff 0..1 ──── N Order (bir garson çok sipariş onaylar; PENDING siparişin onaylayanı yoktur)
 
 ```mermaid
 erDiagram
@@ -23,6 +24,7 @@ erDiagram
     PRODUCT  ||--o{ ORDER_ITEM : includes
     TABLE    ||--o{ ORDER : places
     ORDER    ||--|{ ORDER_ITEM : includes
+    STAFF    |o--o{ ORDER : confirms
 
     CATEGORY {
         int categoryId PK
@@ -45,23 +47,32 @@ erDiagram
     ORDER {
         int orderId PK
         string orderCode UK
-        string status
+        enum status "PENDING | CONFIRMED | CANCELLED | EXPIRED"
         string note
         int tableNo FK
         datetime createdAt
+        datetime expiresAt
+        datetime confirmedAt "nullable"
+        int confirmedBy FK "nullable, STAFF.staffId"
     }
 
     ORDER_ITEM {
         int orderItemId PK
-        int orderId FK
-        int productId FK
+        int orderId FK "UK(orderId, productId)"
+        int productId FK "UK(orderId, productId)"
         int quantity
     }
 
-
+    STAFF {
+        int staffId PK
+        string fullName
+        string username UK
+        string passwordHash
+        enum role "WAITER | ADMIN"
+    }
 ```
 
-![ER diagram](001-er-diagram.svg)
+> `ORDER_ITEM` üzerindeki unique kısıt **birleşiktir**: aynı ürün bir siparişte iki ayrı satır olamaz, adetler tek satırda toplanır. Kolonlar tek başına unique değildir.
 
 ## Options
 
@@ -83,15 +94,14 @@ erDiagram
 
 **Getirdikleri:**
 
-- Sipariş tutarı her zaman ürünün güncel fiyatından hesaplanır.
+- `unitPrice` / `totalAmount` saklanmaz: sipariş tutarı her zaman ürünün güncel fiyatından hesaplanır
 - Masa numarası doğrudan PK (single-tenant olduğu için)
-- unitPrice yok: tutar her zaman güncel fiyattan hesaplanır
 - Fiyatlar kuruş cinsinden int
-
 - Docker ile tek komutla çalışıyor, transaction desteği
 
 **Götürdükleri / dikkat edilecekler:**
 
 - Şema değişiklikleri migration gerektirir
 - Prisma dışarı sızmamalı (use case'ler Prisma nesnesi değil, kendi entity'lerini kullanır)
-- Fiyatlar servis sırasında değiştirilmez
+- Fiyat, sipariş oluşturulduktan sonra garson onaylamadan önce değişirse sipariş toplamı da değişir (kısa ömürlü siparişler nedeniyle kabul edildi)
+- `ORDER_ITEM → PRODUCT` FK'si nedeniyle siparişlerde geçen bir ürün silinemez; ürün kaldırılmak yerine `isAvailable = false` yapılır (Faz 9 admin paneli bunu dikkate almalı)
