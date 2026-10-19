@@ -22,15 +22,15 @@
 
 ## ✅ Verilen Kararlar
 
-| #   | Konu              | Karar                                                                                                                                                                                      | Gerekçe (kısa)                                                                                                                      |
-| --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Proje adı         | **My Menu**                                                                                                                                                                                | —                                                                                                                                   |
-| 2   | QR içeriği        | **Sadece sipariş kodu**                                                                                                                                                                    | Küçük QR, sipariş sunucuda güvende, fiyat manipülasyonu yok                                                                         |
-| 3   | Sipariş saklama   | **Kısa ömürlü siparişler**: onaylanmayanlar ~30 dk'da `EXPIRED` olur, tüm siparişler belirli bir süre sonra (ör. gün sonu / birkaç gün) otomatik silinir. Sipariş geçmişi ve raporlama yok | Bu bir e-ticaret sitesi değil; müşteri fişi restorandan alır                                                                        |
-| 4   | Web frontend      | **React + Vite**                                                                                                                                                                           | React Native ile aynı zihinsel model ve paylaşılabilir mantık; Vite sade ve hızlı                                                   |
-| 5   | Veritabanı        | **PostgreSQL**                                                                                                                                                                             | İlişkisel menü verisi, foreign key bütünlüğü, transaction, Docker ile kolay kurulum                                                 |
-| 6   | Backend framework | **Fastify**                                                                                                                                                                                | Modern, hızlı; dahili JSON Schema validasyonu; plugin sistemi modüler monolite iyi oturuyor                                         |
-| 7   | ORM               | **Prisma** (ileride Knex'e geçiş ihtimali açık)                                                                                                                                            | Tek şema dosyası, otomatik migration, kolay başlangıç. Repository pattern sayesinde geçiş sadece `infrastructure` katmanını etkiler |
+| #   | Konu              | Karar                                                                                                                                                                                                                         | Gerekçe (kısa)                                                                                                                      |
+| --- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Proje adı         | **My Menu**                                                                                                                                                                                                                   | —                                                                                                                                   |
+| 2   | QR içeriği        | **Sadece sipariş kodu**                                                                                                                                                                                                       | Küçük QR, sipariş sunucuda güvende, fiyat manipülasyonu yok                                                                         |
+| 3   | Sipariş saklama   | **Kısa ömürlü siparişler**: onaylanmayanlar varsayılan 15 dk'da (`ORDER_EXPIRY_MINUTES`) `EXPIRED` olur, tüm siparişler belirli bir süre sonra (ör. gün sonu / birkaç gün) otomatik silinir. Sipariş geçmişi ve raporlama yok | Bu bir e-ticaret sitesi değil; müşteri fişi restorandan alır                                                                        |
+| 4   | Web frontend      | **React + Vite**                                                                                                                                                                                                              | React Native ile aynı zihinsel model ve paylaşılabilir mantık; Vite sade ve hızlı                                                   |
+| 5   | Veritabanı        | **PostgreSQL**                                                                                                                                                                                                                | İlişkisel menü verisi, foreign key bütünlüğü, transaction, Docker ile kolay kurulum                                                 |
+| 6   | Backend framework | **Fastify**                                                                                                                                                                                                                   | Modern, hızlı; dahili JSON Schema validasyonu; plugin sistemi modüler monolite iyi oturuyor                                         |
+| 7   | ORM               | **Prisma** (ileride Knex'e geçiş ihtimali açık)                                                                                                                                                                               | Tek şema dosyası, otomatik migration, kolay başlangıç. Repository pattern sayesinde geçiş sadece `infrastructure` katmanını etkiler |
 
 **Bekleyen kararlar:** Kimlik doğrulama yöntemi (JWT / session) — Faz 10'da.
 
@@ -180,7 +180,7 @@ my-menu/
 ### 1.2 Varlıklar (ADR-001 ile uyumlu)
 
 ```
-Category        : id, name, displayOrder, isActive
+Category        : id, name, displayOrder, isActive, maxQuantityPerItem
 Product         : id, categoryId, name, description, price, imageUrl, isAvailable
 ProductOption   : id, productId, name, extraPrice           (ör. "Ekstra peynir +15₺") — ilk sürümde yok, Faz 14'e kaldı
 Table           : number (PK), isActive
@@ -196,21 +196,25 @@ Staff           : id, fullName, username, passwordHash, role (WAITER | ADMIN)
 ```
   PENDING ──(garson QR okutur & onaylar)──► CONFIRMED ──► PREPARING ──► SERVED ──► COMPLETED
      │                                          │
-     ├──(süre aşımı, ör. 30 dk)──► EXPIRED      └──► CANCELLED
+     ├──(süre aşımı, ör. 15 dk)──► EXPIRED      └──► CANCELLED
      └──(müşteri iptal)──────────► CANCELLED
 ```
 
-- [ ] Hangi geçişlerin geçerli olduğunu bir tabloya yaz (ör. `SERVED → PENDING` geçersiz)
-- [ ] Başlangıçta sadece `PENDING → CONFIRMED / CANCELLED / EXPIRED` yeterli; diğerleri sonra
+- [x] Hangi geçişlerin geçerli olduğunu bir tabloya yaz (ör. `SERVED → PENDING` geçersiz)
+- [x] Başlangıçta sadece `PENDING → CONFIRMED / CANCELLED / EXPIRED` yeterli; diğerleri sonra
+
+> 📄 Detaylar: [docs/domain/order-status-machine.md](docs/domain/order-status-machine.md)
 
 ### 1.4 İş kuralları (Business Rules) — yazılı hale getir
 
-- [ ] Sipariş en az 1 ürün içermeli
-- [ ] Bir kalemde maksimum adet (ör. 20)
-- [ ] `isAvailable = false` olan ürün sipariş edilemez
-- [ ] Masa numarası, sistemde kayıtlı ve aktif bir masa olmalı
-- [ ] **Toplam tutar her zaman sunucuda hesaplanır** — istemciden gelen fiyata asla güvenilmez
-- [ ] Onaylanmamış sipariş X dakika sonra `EXPIRED` olur
+> 📄 Detaylar, değerler ve hata mesajları: [docs/domain/business-rules.md](docs/domain/business-rules.md). Kuralların hepsini `ordering` modülü uygular; parantez içinde verinin geldiği modül yazılıdır.
+
+- [x] Sipariş en az 1 ürün içermeli → `ordering`
+- [x] Tek bir üründen en fazla `CATEGORY.maxQuantityPerItem` adet sipariş verilebilir (yemekler 10; salatalar, tatlılar ve içecekler 20) → `ordering` (limit `menu`'den)
+- [x] `isAvailable = false` olan ürün sipariş edilemez → `ordering` (veri `menu`'den)
+- [x] Masa numarası, sistemde kayıtlı ve aktif bir masa olmalı → `ordering` (veri `table`'dan)
+- [x] **Toplam tutar her zaman sunucuda hesaplanır** — istemciden gelen fiyata asla güvenilmez → `ordering` (`OrderPriceCalculator`)
+- [x] Onaylanmamış sipariş, oluşturulduktan `ORDER_EXPIRY_MINUTES` (varsayılan 15) dakika sonra `EXPIRED` olur; müşteri QR ekranında kalan süreyi görür → `ordering` (`Order` entity)
 
 **✅ Bitti kriteri:** Varlık-ilişki diyagramı, durum makinesi ve iş kuralları `docs/` altında yazılı.
 
@@ -322,6 +326,8 @@ apps/api/src/
 
 **✅ Bitti kriteri:** `GET /api/v1/menu` seed verisini kategorilere göre gruplanmış döndürüyor; testler geçiyor.
 
+> 🎨 **Faz 3 bitince web'e başlanır:** `GET /api/v1/menu` hazır olduğu için Faz 7'deki **menü ve sepet sayfaları** bu noktada başlar ve Faz 4–6 ile paralel ilerler. Sepet istemci tarafında yaşadığı için backend'in geri kalanını beklemesi gerekmez. Checkout ve QR ekranı, Faz 5–6 bitince eklenir.
+
 ---
 
 ## Faz 4 — Table Modülü
@@ -413,6 +419,8 @@ CreateOrderUseCase:
 
 ## Faz 7 — Web: Müşteri Arayüzü (React + Vite)
 
+> ⏩ `/menu` ve `/cart` sayfaları Faz 3 bitince başlar (bkz. Faz 3 notu); `/checkout` ve `/order/:code` Faz 5–6'ya bağlıdır.
+
 ### Sayfalar / Akış
 
 ```
@@ -449,6 +457,7 @@ apps/web/src/
 - [ ] **Mobil-öncelikli (mobile-first) tasarım** — müşteriler web sitesini telefonda açacak
 - [ ] Yükleniyor / hata / boş sepet durumları
 - [ ] Sipariş durumu için periyodik kontrol (polling, ör. 5 sn)
+- [ ] QR ekranında kalan süre geri sayımı — **sunucu saatine** göre hesaplanır, müşterinin telefon saatine güvenilmez
 
 > 🔁 **React Native'e hazırlık:** İş mantığını (sepet hesaplamaları, API çağrıları, hook'lar) bileşenlerden ayrı tut. UI değişir, mantık `packages/shared`'a taşınıp mobilde aynen kullanılır.
 
@@ -543,7 +552,7 @@ apps/web/src/
 - [ ] 👨‍🍳 Mutfak ekranı (Kitchen Display) — `OrderConfirmed` event'ini dinler
 - [ ] 🪑 Masaya yapıştırılan QR ile masa numarasının otomatik dolması
 - [ ] ➕ Ürün seçenekleri / ekstralar ("ekstra peynir", "büyük boy")
-- [ ] 🍱 Hazır menüler / kombolar
+- [ ] 🍱 Hazır menüler / kombolar (ürün başına maksimum adet: 10)
 - [ ] 🌍 Çoklu dil (TR/EN)
 - [ ] ~~💳 Online ödeme~~ → **kapsam dışı**: ödeme kasada yapılır (bkz. Açık Sorular #4)
 - [ ] 🏪 Çoklu restoran (multi-tenant) desteği

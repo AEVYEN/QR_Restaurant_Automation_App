@@ -29,6 +29,7 @@ erDiagram
     CATEGORY {
         int categoryId PK
         string name
+        int maxQuantityPerItem "admin belirler, ör. 10 / 20"
     }
 
     PRODUCT {
