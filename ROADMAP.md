@@ -182,7 +182,7 @@ my-menu/
 ```
 Category        : id, name, displayOrder, isActive
 Product         : id, categoryId, name, description, price, imageUrl, isAvailable
-ProductOption   : id, productId, name, extraPrice           (ör. "Ekstra peynir +15₺") — opsiyonel, Faz 14'e kalabilir
+ProductOption   : id, productId, name, extraPrice           (ör. "Ekstra peynir +15₺") — ilk sürümde yok, Faz 14'e kaldı
 Table           : number (PK), isActive
 Order           : id, orderCode, tableNumber, status, note, createdAt, expiresAt, confirmedAt, confirmedBy
 OrderItem       : id, orderId, productId, quantity
@@ -532,7 +532,7 @@ apps/web/src/
 - [ ] `packages/shared` içindeki API client, sabitler, validasyon şemaları ve sepet mantığını yeniden kullan
 - [ ] React Navigation ile ekran akışı (web'deki sayfaların karşılığı)
 - [ ] QR gösterimi (ör. `react-native-qrcode-svg` araştır)
-- [ ] Garson uygulaması mı olacak, yoksa garson paneli web'de mi kalacak? → **karar noktası**
+- [ ] Garson panelini mobil uygulamaya taşı (karar: başlangıçta web paneli, sonra mobil — bkz. Açık Sorular #6)
 - [ ] Backend'de değişiklik **gerekmemeli** — bu, mimarinin doğru kurulduğunun testi ✅
 
 ---
@@ -545,7 +545,7 @@ apps/web/src/
 - [ ] ➕ Ürün seçenekleri / ekstralar ("ekstra peynir", "büyük boy")
 - [ ] 🍱 Hazır menüler / kombolar
 - [ ] 🌍 Çoklu dil (TR/EN)
-- [ ] 💳 Online ödeme
+- [ ] ~~💳 Online ödeme~~ → **kapsam dışı**: ödeme kasada yapılır (bkz. Açık Sorular #4)
 - [ ] 🏪 Çoklu restoran (multi-tenant) desteği
 - [ ] 📊 Raporlama (günlük sipariş, ciro, en çok satanlar) — sipariş saklama süresinin uzatılmasını gerektirir
 - [ ] ⏱️ Kısa ömürlü siparişler için Redis (TTL) değerlendirmesi
@@ -597,11 +597,17 @@ Bu kararın sonuçları, getirdikleri ve götürdükleri
 ## ❓ Açık Sorular (Birlikte Cevaplayacağız)
 
 1. Tek bir restoran için mi, yoksa ileride birden fazla restoranın kullanacağı bir platform mu? (Veritabanı tasarımını doğrudan etkiler)
+   - ✅ **Tek restoran (single-tenant).** Her restoran kendi kurulumunu çalıştırır; restoranları toplayan merkezi bir platform yok. Müşteri, masadaki QR ile restoranın web sitesindeki menüye ulaşır.
 2. Garson onaylamadan önce müşteri siparişini düzenleyebilsin mi?
+   - ✅ **Onaydan önce:** müşteri siparişi iptal edip sepeti düzenleyerek yeni sipariş (yeni QR) oluşturabilir. **Onaydan sonra:** sipariş değiştirilemez; ek istek için yeni sipariş oluşturulur. Oluşturulmuş bir siparişin kalemleri hiçbir durumda değişmez — düzenleme sadece sepette (istemci tarafında) yapılır.
 3. Aynı masadan birden fazla sipariş (ayrı ayrı QR) verilebilsin mi?
+   - ✅ **Evet.** Bir masadan birden fazla sipariş verilebilir (`TABLE 1 ─ N ORDER`).
 4. Ödeme sistemde mi olacak, yoksa kasada mı?
+   - ✅ **Kasada.** Sistemde ödeme olmayacak; müşteri fişi restorandan alır.
 5. Ürünlerde seçenek/ekstra ilk sürümde gerekli mi?
+   - ✅ **Hayır.** Ekstralar ilk sürümde yok, Faz 14'e kaldı.
 6. Garson tarafı web paneli mi kalacak, yoksa mobil uygulama mı olacak?
+   - ✅ **Başlangıçta web paneli**, sonraki geliştirmelerde mobil uygulamaya taşınacak (Faz 13).
 
 ---
 
