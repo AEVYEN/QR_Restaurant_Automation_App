@@ -27,45 +27,49 @@ erDiagram
     STAFF    |o--o{ ORDER : confirms
 
     CATEGORY {
-        int categoryId PK
+        int id PK
         string name
+        int displayOrder "menüde sıralama"
+        bool isActive
         int maxQuantityPerItem "admin belirler, ör. 10 / 20"
     }
 
     PRODUCT {
-        int productId PK
-        string name
+        int id PK
         int categoryId FK
-        int   price
-        bool   isAvailable
+        string name
+        string description "nullable"
+        int price "kuruş"
+        string imageUrl "nullable"
+        bool isAvailable
     }
 
     TABLE {
-        int tableNo PK
+        int number PK
         bool isActive
     }
 
     ORDER {
-        int orderId PK
+        int id PK
         string orderCode UK
         enum status "PENDING | CONFIRMED | CANCELLED | EXPIRED"
-        string note
-        int tableNo FK
+        string note "nullable"
+        int tableNumber FK
         datetime createdAt
         datetime expiresAt
         datetime confirmedAt "nullable"
-        int confirmedBy FK "nullable, STAFF.staffId"
+        int confirmedBy FK "nullable, STAFF.id"
     }
 
     ORDER_ITEM {
-        int orderItemId PK
+        int id PK
         int orderId FK "UK(orderId, productId)"
         int productId FK "UK(orderId, productId)"
         int quantity
     }
 
     STAFF {
-        int staffId PK
+        int id PK
         string fullName
         string username UK
         string passwordHash
@@ -74,6 +78,8 @@ erDiagram
 ```
 
 > `ORDER_ITEM` üzerindeki unique kısıt **birleşiktir**: aynı ürün bir siparişte iki ayrı satır olamaz, adetler tek satırda toplanır. Kolonlar tek başına unique değildir.
+>
+> Alan adları kodda (domain, Prisma modeli) camelCase'dir; veritabanında snake_case kolonlara (`table_number`, `max_quantity_per_item`) ve çoğul tablolara (`orders`, `order_items`) Prisma'nın `@map` / `@@map` özelliğiyle eşlenir. `order` SQL'de rezerve kelime olduğu için bu eşleme ayrıca gereklidir.
 
 ## Options
 

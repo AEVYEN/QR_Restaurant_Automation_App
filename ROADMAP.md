@@ -54,7 +54,7 @@
 | 9   | Web — Admin Paneli        | Menü & masa yönetimi                         |
 | 10  | Kimlik Doğrulama & Yetki  | Personel girişi, roller                      |
 | 11  | Test & Kalite             | Unit / integration / e2e testler             |
-| 12  | Deployment                | Docker image, canlı ortam                    |
+| 12  | Güvenlik & Deployment     | Güvenlik ayarları, Docker image, canlı ortam |
 | 13  | Mobil (React Native)      | Aynı backend'i kullanan mobil uygulama       |
 | 14  | İyileştirmeler            | Gerçek zamanlı bildirim, ödeme, çoklu dil... |
 
@@ -128,7 +128,8 @@ my-menu/
 ├── docker-compose.yml
 ├── docs/
 │   ├── adr/            # Architecture Decision Records
-│   └── ROADMAP.md
+│   └── domain/         # Durum makinesi, iş kuralları
+├── ROADMAP.md
 └── README.md
 ```
 
@@ -189,16 +190,20 @@ OrderItem       : id, orderId, productId, quantity
 Staff           : id, fullName, username, passwordHash, role (WAITER | ADMIN)
 ```
 
+> 🏷️ Alan adları kodda (domain, Prisma modeli) **camelCase**, veritabanında **snake_case** olur (`tableNumber` → `table_number`). Eşleme Prisma'da `@map` / `@@map` ile yapılır. Fiyatlar kuruş cinsinden `int`.
+
 > ⚠️ **Fiyat anlık görüntüsü (snapshot) yok:** `OrderItem` içinde `unitPrice` / `productName` tutulmaz, `Order` içinde de `totalAmount` saklanmaz. Tutar her seferinde ürünün **güncel fiyatından** hesaplanır (bkz. ADR-001). Sonuç: sipariş oluşturulduktan sonra, garson onaylamadan önce admin fiyatı değiştirirse toplam da değişir — siparişler kısa ömürlü olduğu için bu kabul edildi.
 
 ### 1.3 Sipariş durum makinesi (Order Status)
 
 ```
-  PENDING ──(garson QR okutur & onaylar)──► CONFIRMED ──► PREPARING ──► SERVED ──► COMPLETED
-     │                                          │
-     ├──(süre aşımı, ör. 15 dk)──► EXPIRED      └──► CANCELLED
-     └──(müşteri iptal)──────────► CANCELLED
+  PENDING ──(garson QR okutur & onaylar)──► CONFIRMED ┄┄► PREPARING ┄┄► SERVED ┄┄► COMPLETED
+     │                                          │            (sonraki sürüm)
+     ├──(süre aşımı, varsayılan 15 dk)──► EXPIRED └──(garson iptal)──► CANCELLED
+     └──(müşteri iptal)─────────────────► CANCELLED
 ```
+
+İlk sürümde sadece `PENDING`, `CONFIRMED`, `CANCELLED` ve `EXPIRED` var. Kesikli çizgili durumlar sonraki sürümde eklenecek.
 
 - [x] Hangi geçişlerin geçerli olduğunu bir tabloya yaz (ör. `SERVED → PENDING` geçersiz)
 - [x] Başlangıçta sadece `PENDING → CONFIRMED / CANCELLED / EXPIRED` yeterli; diğerleri sonra
@@ -224,7 +229,18 @@ Staff           : id, fullName, username, passwordHash, role (WAITER | ADMIN)
 
 **Amaç:** Tüm modüllerin oturacağı iskeleti ve ortak altyapıyı kurmak.
 
-### 2.1 Klasör yapısı
+### 2.1 Verilen kararlar
+
+| #   | Konu                   | Karar                                                                                                      | Gerekçe (kısa)                                                                                      |
+| --- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1   | API yanıt formatı      | **Zarflı (envelope):** başarıda `{ data }`, hatada `{ error: { code, message, details } }`                 | Web ve mobil client'ta hata yakalama tek yerde çözülür; `code` makine tarafından okunur             |
+| 2   | Health endpoint'i      | **`GET /health`** — versiyonsuz, `/api/v1` dışında                                                         | İş endpoint'i değil altyapı ucu; Docker healthcheck / canlı ortam izleme API versiyonundan bağımsız |
+| 3   | Config doğrulama       | **`env-schema`**                                                                                           | Fastify ile aynı JSON Schema dili; Fastify instance'ından önce (`container.js`'de) çalışabilir      |
+| 4   | DI'ın modüllere geçişi | **Plugin options:** `app.register(menuRoutes, { getMenuUseCase })`                                         | Bağımlılıklar açıkça görünür, Fastify kapsüllemesi korunur; `app.decorate` ile global'e yayılmaz    |
+| 5   | Prisma şeması          | **Faz 2'de model yok**, sadece bağlantı (health için `SELECT 1`). Her modülün modeli kendi fazında eklenir | Fazlar birbirinden bağımsız ilerler; her migration bir modüle ait olur                              |
+| 6   | Event bus              | **Faz 5'e ertelendi**                                                                                      | Şu an dinleyecek kimse yok (YAGNI); ilk ihtiyaç `OrderConfirmed`                                    |
+
+### 2.2 Klasör yapısı
 
 ```
 apps/api/src/
@@ -250,39 +266,49 @@ apps/api/src/
 │   ├── logger/
 │   ├── config/
 │   ├── database/
-│   └── events/                  # In-process event bus (modüller arası gevşek iletişim)
+│   └── events/                  # In-process event bus (modüller arası gevşek iletişim) — Faz 5'te eklenecek
 ├── app.js                       # Fastify instance oluşturma, ortak plugin'ler, modüllerin register edilmesi
 ├── container.js                 # Dependency Injection: bağımlılıkların birleştirildiği yer (composition root)
 └── server.js                    # Uygulamayı başlatır
 ```
 
-### 2.2 Modüler monolitin altın kuralları
+### 2.3 Modüler monolitin altın kuralları
 
 1. **Bir modül başka modülün iç klasörlerine import yapamaz.** Sadece `modules/<name>/index.js` üzerinden erişir.
-   - ✅ `import { menuModule } from '../menu'`
-   - ❌ `import ProductRepository from '../menu/infrastructure/product.repository'`
+   - ✅ `import { menuModule } from '../menu/index.js'` (ESM'de klasör import'u çalışmaz, dosya yolu ve uzantı zorunlu — bkz. ADR-003)
+   - ❌ `import ProductRepository from '../menu/infrastructure/product.repository.js'`
 2. **Bir modül başka modülün tablolarına doğrudan sorgu atmaz.** `ordering` modülü ürün fiyatına ihtiyaç duyarsa `menu` modülünün public API'sinden ister.
 3. **Bağımlılık yönü içe doğrudur:** `presentation → application → domain`. `infrastructure`, `application`'daki sözleşmeyi uygular.
 4. Modüller arası "bir şey oldu" bildirimi için **event** kullan (ör. `OrderConfirmed` olayı).
 5. İleride bir modülü mikroservise ayırmak istersen, bu kurallar sayesinde kolayca ayrılır.
 6. **Her modülün HTTP katmanı bir Fastify plugin'i olarak register edilir** (ör. `app.register(menuRoutes, { prefix: '/api/v1' })`). Fastify'ın plugin kapsülleme (encapsulation) mantığını araştır — modül sınırlarını HTTP tarafında da korur.
 
-> 🛠️ Bu kuralları otomatik denetlemek için `eslint-plugin-boundaries` veya `dependency-cruiser` araştırılabilir.
+> 🛠️ Bu kurallar Faz 2'de `eslint-plugin-boundaries` ile otomatik denetlenir (bkz. 2.4).
 
-### 2.3 Görevler
+### 2.4 Görevler
 
-- [ ] Fastify kurulumu, `/health` endpoint'i
-- [ ] Merkezi config (env değişkenlerini tek yerden okuma ve doğrulama)
-- [ ] Logger (Fastify'da `pino` dahili gelir — sadece yapılandır)
-- [ ] Merkezi hata yakalama (`setErrorHandler`) + özel hata sınıfları
-- [ ] Standart API yanıt formatı (başarı ve hata için tek tip JSON yapısı)
+Önerilen sıra; her madde ayrı bir commit:
+
+- [ ] Fastify kurulumu, `app.js` (`buildApp()`) / `server.js` (`listen`) ayrımı, `GET /health` (önce DB'siz)
+- [ ] Merkezi config: env değişkenlerini tek yerden okuma ve `env-schema` ile doğrulama — eksik/hatalı değişkende uygulama **açılırken** çöker. `.env.example`'a `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `NODE_ENV` eklenir
+- [ ] Logger (Fastify'da `pino` dahili gelir — sadece yapılandır; geliştirmede `pino-pretty`, log seviyesi config'den)
+- [ ] Merkezi hata yakalama (`setErrorHandler` + `setNotFoundHandler`) + özel hata sınıfları (`AppError`: `statusCode` + `code`). Fastify'ın validasyon hataları da standart formata çevrilir; bilinmeyen hatada iç detay kullanıcıya sızmaz
+- [ ] Standart API yanıt formatı (bkz. 2.1 #1)
 - [ ] Request validasyonu: Fastify'ın dahili JSON Schema desteği (route'a `schema` verilir). Web/mobil ile şema paylaşmak istersek `zod` + dönüştürücü değerlendirilebilir
-- [ ] Prisma kurulumu: `schema.prisma`, ilk migration, `PrismaClient`'ı `shared/database/` altında tek örnek (singleton) olarak oluşturma, uygulama kapanınca bağlantıyı kapatma
+- [ ] Prisma kurulumu (model yok — bkz. 2.1 #5): `PrismaClient`'ı `shared/database/` altında tek örnek (singleton) olarak oluşturma, `onClose` hook'unda bağlantıyı kapatma, `SIGINT` / `SIGTERM`'de `app.close()`. `/health` artık DB'yi de kontrol eder
 - [ ] `container.js` ile basit Dependency Injection (kütüphanesiz, elle başla; gerekirse `awilix`)
-- [ ] API versiyonlama: `/api/v1/...`
+- [ ] Modül iskeletleri: `menu`, `table`, `ordering`, `identity` klasörleri + boş `index.js`; HTTP plugin'leri `/api/v1` prefix'iyle register edilir
+- [ ] `eslint-plugin-boundaries` ile modül sınırı kurallarını ESLint'e ekle
 - [ ] Backend'i de `docker-compose`'a ekle
 
-**✅ Bitti kriteri:** `GET /api/v1/health` veritabanı bağlantısını da kontrol ederek `200` dönüyor.
+> ⚠️ **Dikkat edilecekler**
+>
+> - **Prisma 7:** Kurulum eski sürümlerden farklı (driver adapter `@prisma/adapter-pg`, generator'da zorunlu `output`, `prisma.config` dosyası). Eski tutorial'lar yerine resmi dokümanı takip et.
+> - **`DATABASE_URL`:** Host'tan bağlanırken `localhost`, compose içindeki api container'ından bağlanırken servis adı `db`.
+> - **Windows → Linux container:** Host'taki `node_modules` container'a mount edilmez (platforma özel binary'ler). Anonim volume ile ayrılır.
+> - **npm workspaces + Docker:** Bağımlılıklar köke hoist edilir; Dockerfile kökteki `package.json` ve `package-lock.json`'ı da kopyalamalı.
+
+**✅ Bitti kriteri:** `GET /health` veritabanı bağlantısını da kontrol ederek `200` dönüyor; `docker compose up` ile db + api birlikte ayağa kalkıyor.
 
 ---
 
@@ -317,7 +343,7 @@ apps/api/src/
 ### Görevler
 
 - [ ] `Category` ve `Product` entity'leri (domain kuralları: fiyat negatif olamaz vb.)
-- [ ] Migration + seed verisi (örnek menü: Burgerler, İçecekler, Salatalar, Tatlılar)
+- [ ] Prisma modelleri (`Category`, `Product`) + migration + seed verisi (örnek menü: Burgerler, İçecekler, Salatalar, Tatlılar)
 - [ ] Repository sözleşmesi + implementasyonu
 - [ ] `GetMenuUseCase`
 - [ ] Controller + route + validasyon
@@ -333,7 +359,7 @@ apps/api/src/
 ## Faz 4 — Table Modülü
 
 - [ ] `Table` entity'si (`number`, `isActive`)
-- [ ] Seed: ör. 1–20 arası masalar
+- [ ] Prisma modeli (`Table`) + migration + seed: ör. 1–20 arası masalar
 - [ ] `GET /api/v1/tables/:number/validate` → masa var ve aktif mi?
 - [ ] Public API: `isTableAvailable(tableNumber)` → `ordering` modülü kullanacak
 - [ ] Admin endpoint'leri (masa ekle / pasifleştir) → Faz 9
@@ -369,16 +395,19 @@ CreateOrderUseCase:
 | PATCH  | `/api/v1/orders/:orderCode/cancel`        | Müşteri iptali (sadece PENDING iken)           | Müşteri      |
 | GET    | `/api/v1/staff/orders/:orderCode`         | QR okutulunca sipariş detayı                   | Garson       |
 | PATCH  | `/api/v1/staff/orders/:orderCode/confirm` | Siparişi onayla                                | Garson       |
+| PATCH  | `/api/v1/staff/orders/:orderCode/cancel`  | Onaylanmış siparişi iptal et (ör. ürün bitti)  | Garson       |
 | GET    | `/api/v1/staff/orders?status=CONFIRMED`   | Sipariş listesi                                | Garson/Admin |
 
 ### Görevler
 
-- [ ] `Order` aggregate'i: kalem ekleme, durum geçişleri domain içinde (`order.confirm(staffId)` gibi metodlar; geçersiz geçişte hata)
+- [ ] Prisma modelleri (`Order`, `OrderItem`) + migration. `Order.confirmedBy` → `Staff` FK'si nedeniyle **`Staff` modeli de bu fazda oluşturulur** (+ seed'de bir test garsonu); giriş/şifre işleri Faz 10'da
+- [ ] `Order` aggregate'i: kalem ekleme, durum geçişleri domain içinde (`order.confirm(staffId)` gibi metodlar; geçersiz geçişte hata — bkz. [order-status-machine.md](docs/domain/order-status-machine.md))
 - [ ] `OrderPriceCalculator` (ayrı sınıf → SRP + OCP)
 - [ ] `CodeGenerator`: tahmin edilemeyen kısa kod (ör. `nanoid`, 8–10 karakter, karışması kolay karakterler hariç: `0/O`, `1/I/l`)
 - [ ] Transaction yönetimi (Unit of Work fikrini araştır)
 - [ ] Süresi dolan siparişleri `EXPIRED` yapma (başlangıçta: okunurken kontrol; sonra: zamanlanmış iş)
 - [ ] Eski siparişleri otomatik silen temizlik işi (cleanup job) — saklama süresi config'den okunsun (ör. `ORDER_RETENTION_HOURS`)
+- [ ] `shared/events/` altında in-process event bus kur (Faz 2'den ertelendi)
 - [ ] `OrderConfirmed` event'i yayınla (ileride bildirim/mutfak ekranı dinleyecek)
 - [ ] Unit testler: fiyat hesaplama, durum geçişleri, iş kuralları
 - [ ] Integration test: gerçek veritabanıyla sipariş oluşturma
@@ -469,7 +498,7 @@ apps/web/src/
 
 - [ ] `/staff/login`
 - [ ] `/staff/scan` → kamera ile QR okutma + elle kod girişi
-- [ ] `/staff/orders/:code` → sipariş detayı, masa no, kalemler, not, toplam → "Onayla" / "Reddet"
+- [ ] `/staff/orders/:code` → sipariş detayı, masa no, kalemler, not, toplam → `PENDING` ise "Onayla", `CONFIRMED` ise "İptal et" (garson `PENDING` siparişi iptal edemez — bkz. [order-status-machine.md](docs/domain/order-status-machine.md))
 - [ ] `/staff/orders` → aktif siparişler listesi (masa numarasına göre)
 
 **✅ Bitti kriteri:** Garson giriş yapıp QR okutarak siparişi onaylayabiliyor.
@@ -590,16 +619,16 @@ Ne seçtik?
 Bu kararın sonuçları, getirdikleri ve götürdükleri
 ```
 
-**Yazılması planlanan ADR'ler:**
+**ADR'ler** (kutucuk = ADR dosyası yazıldı):
 
-- [x] ADR-001: Veritabanı seçimi → **PostgreSQL**
-- [x] ADR-006: Web frontend → **React + Vite**
-- [x] ADR-007: Sipariş saklama politikası → **Kısa ömürlü, otomatik silme**
-- [x] ADR-002: Backend framework seçimi → **Fastify**
-- [x] ADR-008: ORM seçimi → **Prisma**
-- [ ] ADR-003: Monorepo yapısı
-- [x] ADR-004: QR içeriği → **Karar: QR'da sadece sipariş kodu olacak**
-- [ ] ADR-005: Kimlik doğrulama yöntemi (JWT vs. session)
+- [x] [ADR-001](docs/adr/001-database.md): Veritabanı seçimi → **PostgreSQL** (ORM kararı **Prisma** da bu ADR'de)
+- [x] [ADR-002](docs/adr/002-backend-framework.md): Backend framework seçimi → **Fastify**
+- [x] [ADR-003](docs/adr/003-monorepo-structure.md): Monorepo yapısı → **npm workspaces**
+- [ ] ADR-004: QR içeriği → karar verildi (**sadece sipariş kodu**), dosyası yazılacak
+- [ ] ADR-005: Kimlik doğrulama yöntemi (JWT vs. session) → Faz 10'da karar verilecek
+- [ ] ADR-006: Web frontend → karar verildi (**React + Vite**), dosyası yazılacak
+- [ ] ADR-007: Sipariş saklama politikası → karar verildi (**kısa ömürlü, otomatik silme**), dosyası yazılacak
+- ~~ADR-008: ORM seçimi~~ → ADR-001'e dahil edildi; numara tekrar kullanılmaz
 
 ---
 
@@ -630,4 +659,4 @@ Her faz için önerilen döngü:
 4. **Refactor** → Geri bildirime göre düzenlersin
 5. **Bitti kriteri kontrolü** → Faz tamamlandı mı? Roadmap'te kutucukları işaretle ✅
 
-> 🧭 **Sıradaki adım:** Faz 0 — veritabanı ve framework kararlarını konuşmak.
+> 🧭 **Sıradaki adım:** Faz 2 — ilk görev: Fastify kurulumu, `app.js` / `server.js` ayrımı ve `GET /health` (bkz. 2.4).
