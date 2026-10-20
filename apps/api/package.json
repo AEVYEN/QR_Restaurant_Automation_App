@@ -3,9 +3,15 @@
   "private": true,
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "fastify": "^5.12.7"
+  }
 }
