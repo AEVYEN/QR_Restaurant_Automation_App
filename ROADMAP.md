@@ -289,11 +289,11 @@ apps/api/src/
 
 Önerilen sıra; her madde ayrı bir commit:
 
-- [ ] Fastify kurulumu, `app.js` (`buildApp()`) / `server.js` (`listen`) ayrımı, `GET /health` (önce DB'siz)
-- [ ] Merkezi config: env değişkenlerini tek yerden okuma ve `env-schema` ile doğrulama — eksik/hatalı değişkende uygulama **açılırken** çöker. `.env.example`'a `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `NODE_ENV` eklenir
-- [ ] Logger (Fastify'da `pino` dahili gelir — sadece yapılandır; geliştirmede `pino-pretty`, log seviyesi config'den)
-- [ ] Merkezi hata yakalama (`setErrorHandler` + `setNotFoundHandler`) + özel hata sınıfları (`AppError`: `statusCode` + `code`). Fastify'ın validasyon hataları da standart formata çevrilir; bilinmeyen hatada iç detay kullanıcıya sızmaz
-- [ ] Standart API yanıt formatı (bkz. 2.1 #1)
+- [x] Fastify kurulumu, `app.js` (`buildApp()`) / `server.js` (`listen`) ayrımı, `GET /health` (önce DB'siz)
+- [x] Merkezi config: env değişkenlerini tek yerden okuma ve `env-schema` ile doğrulama — eksik/hatalı değişkende uygulama **açılırken** çöker. `.env.example`'a `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `NODE_ENV` eklenir
+- [x] Logger (Fastify'da `pino` dahili gelir — sadece yapılandır; geliştirmede `pino-pretty`, log seviyesi config'den)
+- [x] Merkezi hata yakalama (`setErrorHandler` + `setNotFoundHandler`) + özel hata sınıfları (`AppError`: `statusCode` + `code`). Fastify'ın validasyon hataları da standart formata çevrilir; bilinmeyen hatada iç detay kullanıcıya sızmaz
+- [x] Standart API yanıt formatı (bkz. 2.1 #1)
 - [ ] Request validasyonu: Fastify'ın dahili JSON Schema desteği (route'a `schema` verilir). Web/mobil ile şema paylaşmak istersek `zod` + dönüştürücü değerlendirilebilir
 - [ ] Prisma kurulumu (model yok — bkz. 2.1 #5): `PrismaClient`'ı `shared/database/` altında tek örnek (singleton) olarak oluşturma, `onClose` hook'unda bağlantıyı kapatma, `SIGINT` / `SIGTERM`'de `app.close()`. `/health` artık DB'yi de kontrol eder
 - [ ] `container.js` ile basit Dependency Injection (kütüphanesiz, elle başla; gerekirse `awilix`)

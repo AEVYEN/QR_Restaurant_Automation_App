@@ -14,7 +14,7 @@ export async function buildApp() {
   app.setErrorHandler(errorHandler);
 
   app.setNotFoundHandler(async (request) => {
-    throw new NotFoundError(`${request.method} ${request.url}  bulunamadı`);
+    throw new NotFoundError(`${request.method} ${request.url} bulunamadı`);
   });
   app.register(healthRoutes);
 
