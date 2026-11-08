@@ -17,4 +17,5 @@ Thumbs.db
 
 .vscode/
 
-
+#Prisma generated client
+apps/api/src/generated/
