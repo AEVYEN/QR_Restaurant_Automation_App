@@ -1,4 +1,5 @@
 import { AppError } from './app-error.js';
+import { formatValidationErrors } from './format-validation-errors.js';
 
 export function errorHandler(error, request, reply) {
   // AppError throw errors
@@ -13,7 +14,7 @@ export function errorHandler(error, request, reply) {
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Geçersiz/Hatalı kullanıcı verisi',
-        details: error.validation,
+        details: formatValidationErrors(error.validation),
       },
     });
   }
