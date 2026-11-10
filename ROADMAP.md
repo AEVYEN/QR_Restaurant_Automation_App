@@ -298,7 +298,7 @@ apps/api/src/
 - [x] Prisma kurulumu (model yok — bkz. 2.1 #5): `PrismaClient`'ı `shared/database/` altında tek örnek (singleton) olarak oluşturma, `onClose` hook'unda bağlantıyı kapatma, `SIGINT` / `SIGTERM`'de `app.close()`. `/health` artık DB'yi de kontrol eder
 - [x] `container.js` ile basit Dependency Injection (kütüphanesiz, elle başla; gerekirse `awilix`)
 - [x] Modül iskeletleri: `menu`, `table`, `ordering`, `identity` klasörleri + boş `index.js`; HTTP plugin'leri `/api/v1` prefix'iyle register edilir
-- [ ] `eslint-plugin-boundaries` ile modül sınırı kurallarını ESLint'e ekle
+- [x] `eslint-plugin-boundaries` ile modül sınırı kurallarını ESLint'e ekle
 - [ ] Backend'i de `docker-compose`'a ekle
 
 > ⚠️ **Dikkat edilecekler**
