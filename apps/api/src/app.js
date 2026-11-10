@@ -1,11 +1,11 @@
 import Fastify from 'fastify';
 import healthRoutes from './shared/health/health.routes.js';
-import { config } from './shared/config/config.js';
 import { errorHandler } from './shared/errors/error-handler.js';
 import { NotFoundError } from './shared/errors/app-error.js';
-import { prisma } from './shared/database/prisma.js';
 
-export async function buildApp() {
+export async function buildApp(container) {
+  const { config, prisma, checkDatabase } = container;
+
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
@@ -17,8 +17,9 @@ export async function buildApp() {
   app.setNotFoundHandler(async (request) => {
     throw new NotFoundError(`${request.method} ${request.url} bulunamadı`);
   });
-  app.register(healthRoutes);
-  // Sunucu kapanırken veritabanı bağlantı havuzunu da kapıtıyoruz
+  app.register(healthRoutes, { checkDatabase });
+
+  // Sunucu kapanırken veritabanı bağlantı havuzunu da kapatıyoruz
   app.addHook('onClose', async () => {
     await prisma.$disconnect();
   });
