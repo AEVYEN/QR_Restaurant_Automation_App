@@ -1,7 +1,9 @@
+import { existsSync } from 'node:fs';
 import { defineConfig, env } from 'prisma/config';
 
-// Tek .env dosyamız kök dizinde; yolu bu dosyanın konumuna göre bulunur
-process.loadEnvFile(new URL('../../.env', import.meta.url));
+// Yerelde kökteki .env'i yükle; Docker'da dosya yoktur, değişkenler ortamdan gelir
+const envFile = new URL('../../.env', import.meta.url);
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
