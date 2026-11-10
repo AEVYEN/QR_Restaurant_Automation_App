@@ -7,3 +7,7 @@ const adapter = new PrismaPg({ connectionString: config.DATABASE_URL });
 
 // Uygulamanın tamamı bu tek örneği kullanır
 export const prisma = new PrismaClient({ adapter });
+
+export async function checkDatabase() {
+  await prisma.$queryRaw`SELECT 1`;
+}

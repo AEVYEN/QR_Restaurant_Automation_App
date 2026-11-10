@@ -1,5 +1,6 @@
+import { checkDatabase } from '../database/prisma.js';
 import ok from '../http/response.js';
-
+import { ServiceUnavailableError } from '../errors/app-error.js';
 export default async function healthRoutes(fastify) {
   fastify.get(
     '/health',
@@ -14,6 +15,7 @@ export default async function healthRoutes(fastify) {
                 type: 'object',
                 required: ['status'],
                 properties: {
+                  database: { type: 'string' },
                   status: {
                     type: 'string',
                   },
@@ -24,8 +26,14 @@ export default async function healthRoutes(fastify) {
         },
       },
     },
-    async () => {
-      return ok({ status: 'ok' });
+    async (request) => {
+      try {
+        await checkDatabase();
+      } catch (err) {
+        request.log.error(err);
+        throw new ServiceUnavailableError();
+      }
+      return ok({ status: 'ok', database: 'up' });
     },
   );
 }
