@@ -299,7 +299,7 @@ apps/api/src/
 - [x] `container.js` ile basit Dependency Injection (kütüphanesiz, elle başla; gerekirse `awilix`)
 - [x] Modül iskeletleri: `menu`, `table`, `ordering`, `identity` klasörleri + boş `index.js`; HTTP plugin'leri `/api/v1` prefix'iyle register edilir
 - [x] `eslint-plugin-boundaries` ile modül sınırı kurallarını ESLint'e ekle
-- [ ] Backend'i de `docker-compose`'a ekle
+- [x] Backend'i de `docker-compose`'a ekle
 
 > ⚠️ **Dikkat edilecekler**
 >
