@@ -29,7 +29,7 @@ export async function buildApp(container) {
       api.register(orderingModule);
       api.register(identityModule);
     },
-    { prefix: '/api/v1' },
+    { prefix: '/api/v1' }, //Mobil sürümle web sürümü karmaşasının önüne geçer.
   );
 
   // Sunucu kapanırken veritabanı bağlantı havuzunu da kapatıyoruz
