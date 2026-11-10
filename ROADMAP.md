@@ -295,7 +295,7 @@ apps/api/src/
 - [x] Merkezi hata yakalama (`setErrorHandler` + `setNotFoundHandler`) + özel hata sınıfları (`AppError`: `statusCode` + `code`). Fastify'ın validasyon hataları da standart formata çevrilir; bilinmeyen hatada iç detay kullanıcıya sızmaz
 - [x] Standart API yanıt formatı (bkz. 2.1 #1)
 - [x] Request validasyonu: Fastify'ın dahili JSON Schema desteği (route'a `schema` verilir). Web/mobil ile şema paylaşmak istersek `zod` + dönüştürücü değerlendirilebilir
-- [ ] Prisma kurulumu (model yok — bkz. 2.1 #5): `PrismaClient`'ı `shared/database/` altında tek örnek (singleton) olarak oluşturma, `onClose` hook'unda bağlantıyı kapatma, `SIGINT` / `SIGTERM`'de `app.close()`. `/health` artık DB'yi de kontrol eder
+- [x] Prisma kurulumu (model yok — bkz. 2.1 #5): `PrismaClient`'ı `shared/database/` altında tek örnek (singleton) olarak oluşturma, `onClose` hook'unda bağlantıyı kapatma, `SIGINT` / `SIGTERM`'de `app.close()`. `/health` artık DB'yi de kontrol eder
 - [ ] `container.js` ile basit Dependency Injection (kütüphanesiz, elle başla; gerekirse `awilix`)
 - [ ] Modül iskeletleri: `menu`, `table`, `ordering`, `identity` klasörleri + boş `index.js`; HTTP plugin'leri `/api/v1` prefix'iyle register edilir
 - [ ] `eslint-plugin-boundaries` ile modül sınırı kurallarını ESLint'e ekle
