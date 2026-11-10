@@ -2,6 +2,7 @@ import ok from '../http/response.js';
 import { ServiceUnavailableError } from '../errors/app-error.js';
 export default async function healthRoutes(fastify, options) {
   const { checkDatabase } = options;
+
   fastify.get(
     '/health',
     {
