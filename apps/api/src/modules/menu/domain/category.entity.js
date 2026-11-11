@@ -10,7 +10,7 @@ export class Category {
     if (typeof name !== 'string' || name.trim() === '') {
       throw new ValidationError('Kategori adı boş olamaz.');
     }
-    if (Number.isInteger(maxQuantityPerItem) == false || maxQuantityPerItem < 1) {
+    if (!Number.isInteger(maxQuantityPerItem) || maxQuantityPerItem < 1) {
       throw new ValidationError(`Ürün adet sınırı en az 1 olan bir tam sayı olmalı.`);
     }
     if (!Number.isInteger(displayOrder) || displayOrder < 0) {
