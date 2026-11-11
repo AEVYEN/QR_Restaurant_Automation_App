@@ -332,13 +332,19 @@ apps/api/src/
 
 ### Endpoint'ler (taslak)
 
-| Method          | Path                           | Açıklama                                    | Erişim           |
-| --------------- | ------------------------------ | ------------------------------------------- | ---------------- |
-| GET             | `/api/v1/menu`                 | Kategorilere göre gruplanmış, aktif ürünler | Herkes           |
-| GET             | `/api/v1/categories`           | Kategori listesi                            | Herkes           |
-| GET             | `/api/v1/products/:id`         | Ürün detayı                                 | Herkes           |
-| POST/PUT/DELETE | `/api/v1/admin/categories` ... | Kategori yönetimi                           | Admin (Faz 9–10) |
-| POST/PUT/DELETE | `/api/v1/admin/products` ...   | Ürün yönetimi                               | Admin (Faz 9–10) |
+| Method          | Path                           | Açıklama                                                      | Erişim           |
+| --------------- | ------------------------------ | ------------------------------------------------------------- | ---------------- |
+| GET             | `/api/v1/menu`                 | Aktif kategorilere göre gruplanmış ürünler (tükenenler dahil) | Herkes           |
+| GET             | `/api/v1/categories`           | Kategori listesi                                              | Herkes           |
+| GET             | `/api/v1/products/:id`         | Ürün detayı                                                   | Herkes           |
+| POST/PUT/DELETE | `/api/v1/admin/categories` ... | Kategori yönetimi                                             | Admin (Faz 9–10) |
+| POST/PUT/DELETE | `/api/v1/admin/products` ...   | Ürün yönetimi                                                 | Admin (Faz 9–10) |
+
+> 📌 **Karar: tükenen ürünler menüde görünür.** Pasif kategorideki ürünler gizlenir, ama `isAvailable: false` olan ürünler menüden çıkarılmaz; müşteri "bugün yok" bilgisini görür. Sonuçları:
+>
+> - `GET /api/v1/menu` yanıtında `isAvailable` alanı **mutlaka** bulunur (web "Tükendi" gösterebilsin).
+> - "Tükenen ürün sipariş edilemez" kuralı sorgu filtresiyle değil, **Faz 5'te `CreateOrderUseCase` içinde** uygulanır. İstemci arayüzü atlayıp API'ye doğrudan istek atabilir.
+> - Faz 7'de tükenen ürün kartı "Tükendi" etiketiyle gösterilir, "Sepete ekle" kapalıdır.
 
 ### Görevler
 
@@ -379,7 +385,7 @@ apps/api/src/
 CreateOrderUseCase:
   1. Masayı doğrula            → table modülünün public API'si
   2. Ürünleri getir            → menu modülünün public API'si (getProductsByIds)
-  3. Kuralları uygula          → ürün mevcut mu, adetler geçerli mi
+  3. Kuralları uygula          → ürün var mı, isAvailable mı (menü tükenenleri de gösterir!), adetler geçerli mi
   4. Fiyatı SUNUCUDA hesapla   → OrderPriceCalculator
   5. Benzersiz orderCode üret  → CodeGenerator
   6. Order + OrderItems'ı TEK TRANSACTION'da kaydet
@@ -485,6 +491,7 @@ apps/web/src/
 - [ ] Sepeti `localStorage`'a kaydet (sayfa yenilenince kaybolmasın)
 - [ ] **Mobil-öncelikli (mobile-first) tasarım** — müşteriler web sitesini telefonda açacak
 - [ ] Yükleniyor / hata / boş sepet durumları
+- [ ] Tükenen ürünler (`isAvailable: false`): kartta "Tükendi" etiketi, "Sepete ekle" kapalı (bkz. Faz 3 kararı)
 - [ ] Sipariş durumu için periyodik kontrol (polling, ör. 5 sn)
 - [ ] QR ekranında kalan süre geri sayımı — **sunucu saatine** göre hesaplanır, müşterinin telefon saatine güvenilmez
 
