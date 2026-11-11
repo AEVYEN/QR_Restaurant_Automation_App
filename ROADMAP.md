@@ -343,7 +343,7 @@ apps/api/src/
 ### Görevler
 
 - [x] `Category` ve `Product` entity'leri (domain kuralları: fiyat negatif olamaz vb.)
-- [ ] Prisma modelleri (`Category`, `Product`) + migration + seed verisi (örnek menü: Burgerler, İçecekler, Salatalar, Tatlılar)
+- [x] Prisma modelleri (`Category`, `Product`) + migration + seed verisi (örnek menü: Burgerler, İçecekler, Salatalar, Tatlılar)
 - [ ] Repository sözleşmesi + implementasyonu
 - [ ] `GetMenuUseCase`
 - [ ] Controller + route + validasyon
