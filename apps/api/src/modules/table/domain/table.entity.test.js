@@ -15,8 +15,6 @@ describe('Table', () => {
     assert.throws(() => new Table({ number: -1 }), ValidationError);
   });
 
-  // ---- Bundan sonrası SENİN: ___ yerlerini doldur ----
-
   it('0 numaralı masayı kabul eder (sınır değeri)', () => {
     const table = new Table({ number: 0 });
 
