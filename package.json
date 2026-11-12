@@ -9,6 +9,7 @@
   "description": "",
   "scripts": {
     "lint": "eslint .",
+    "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
