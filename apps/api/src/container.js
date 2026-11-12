@@ -1,3 +1,4 @@
+import { createMenuModule } from './modules/menu/index.js';
 import { config } from './shared/config/config.js';
 import { prisma, checkDatabase } from './shared/database/prisma.js';
 
@@ -8,5 +9,6 @@ export function buildContainer() {
     config,
     prisma,
     checkDatabase,
+    menu: createMenuModule({ prisma }),
   };
 }

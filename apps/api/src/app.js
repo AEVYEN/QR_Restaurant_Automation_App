@@ -2,13 +2,12 @@ import Fastify from 'fastify';
 import healthRoutes from './shared/health/health.routes.js';
 import { errorHandler } from './shared/errors/error-handler.js';
 import { NotFoundError } from './shared/errors/app-error.js';
-import { menuModule } from './modules/menu/index.js';
 import { identityModule } from './modules/identity/index.js';
 import { orderingModule } from './modules/ordering/index.js';
 import { tableModule } from './modules/table/index.js';
 
 export async function buildApp(container) {
-  const { config, prisma, checkDatabase } = container;
+  const { config, prisma, checkDatabase, menu } = container;
 
   const app = Fastify({
     logger: {
@@ -24,7 +23,7 @@ export async function buildApp(container) {
   app.register(healthRoutes, { checkDatabase });
   app.register(
     async (api) => {
-      api.register(menuModule);
+      api.register(menu.plugin);
       api.register(tableModule);
       api.register(orderingModule);
       api.register(identityModule);
