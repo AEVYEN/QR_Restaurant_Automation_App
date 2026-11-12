@@ -4,10 +4,9 @@ import { errorHandler } from './shared/errors/error-handler.js';
 import { NotFoundError } from './shared/errors/app-error.js';
 import { identityModule } from './modules/identity/index.js';
 import { orderingModule } from './modules/ordering/index.js';
-import { tableModule } from './modules/table/index.js';
 
 export async function buildApp(container) {
-  const { config, prisma, checkDatabase, menu } = container;
+  const { config, prisma, checkDatabase, menu, table } = container;
 
   const app = Fastify({
     logger: {
@@ -24,7 +23,7 @@ export async function buildApp(container) {
   app.register(
     async (api) => {
       api.register(menu.plugin);
-      api.register(tableModule);
+      api.register(table.plugin);
       api.register(orderingModule);
       api.register(identityModule);
     },

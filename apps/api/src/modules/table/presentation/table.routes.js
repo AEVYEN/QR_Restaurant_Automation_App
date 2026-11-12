@@ -13,10 +13,10 @@ export async function tableRoutes(fastify, options) {
           type: 'object',
           required: ['number'],
           properties: {
-            // TODO (SEN): number için tip ve alt sınır yaz.
-            //   - Tam sayı olmalı
-            //   - Table entity'si ile AYNI kural: 0 dahil (bar masası)
-            number: { ___ },
+            number: {
+              type: 'integer',
+              minimum: 0,
+            },
           },
         },
         response: {
@@ -37,8 +37,7 @@ export async function tableRoutes(fastify, options) {
       },
     },
     async (request) => {
-      // TODO (SEN): URL'deki numarayı al, use case'e ver, sonucu ok(...) ile sarıp döndür.
-      //   İpucu: URL parametreleri request.params içinde durur.
+      return ok(await validateTableUseCase.execute(request.params.number));
     },
   );
 }

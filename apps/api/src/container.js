@@ -1,4 +1,5 @@
 import { createMenuModule } from './modules/menu/index.js';
+import { createTableModule } from './modules/table/index.js';
 import { config } from './shared/config/config.js';
 import { prisma, checkDatabase } from './shared/database/prisma.js';
 
@@ -10,5 +11,6 @@ export function buildContainer() {
     prisma,
     checkDatabase,
     menu: createMenuModule({ prisma }),
+    table: createTableModule({ prisma }),
   };
 }
