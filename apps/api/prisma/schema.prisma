@@ -32,3 +32,10 @@ model Product {
   @@index([categoryId])
   @@map("products")
 }
+
+model Table {
+  number   Int     @id
+  isActive Boolean @default(true) @map("is_active")
+
+  @@map("tables")
+}

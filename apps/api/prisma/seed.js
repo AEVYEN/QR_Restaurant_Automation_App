@@ -2,6 +2,7 @@ import { prisma } from '../src/shared/database/prisma.js';
 
 // Geliştirme ortamı için örnek menü. Fiyatlar KURUŞ cinsinden (4500 = 45,00 ₺).
 // maxQuantityPerItem: ROADMAP iş kuralı → yemekler 10; salata, tatlı ve içecekler 20
+const LAST_TABLE_NUMBER = 20;
 const menu = [
   {
     name: 'Burgerler',
@@ -58,7 +59,16 @@ async function main() {
       });
     }
   }
-  console.log(`Seed tamamlandı: ${menu.length} kategori`);
+
+  for (let i = 0; i <= LAST_TABLE_NUMBER; i++) {
+    await prisma.table.upsert({
+      where: { number: i },
+      update: {},
+      create: { number: i },
+    });
+  }
+
+  console.log(`Seed tamamlandı: ${menu.length} kategori, ${LAST_TABLE_NUMBER + 1} masa.`);
 }
 
 try {
