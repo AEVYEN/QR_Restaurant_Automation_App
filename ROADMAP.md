@@ -365,7 +365,7 @@ apps/api/src/
 ## Faz 4 — Table Modülü
 
 - [x] `Table` entity'si (`number`, `isActive`)
-- [ ] Prisma modeli (`Table`) + migration + seed: ör. 1–20 arası masalar
+- [x] Prisma modeli (`Table`) + migration + seed: ör. 1–20 arası masalar
 - [ ] `GET /api/v1/tables/:number/validate` → masa var ve aktif mi?
 - [ ] Public API: `isTableAvailable(tableNumber)` → `ordering` modülü kullanacak
 - [ ] Admin endpoint'leri (masa ekle / pasifleştir) → Faz 9
