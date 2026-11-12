@@ -352,7 +352,7 @@ apps/api/src/
 - [x] Prisma modelleri (`Category`, `Product`) + migration + seed verisi (örnek menü: Burgerler, İçecekler, Salatalar, Tatlılar)
 - [x] Repository sözleşmesi + implementasyonu
 - [x] `GetMenuUseCase`
-- [ ] Controller + route + validasyon
+- [x] Controller + route + validasyon
 - [ ] Modülün `index.js`'inde dışarıya açılacak fonksiyonu tanımla: ör. `getProductsByIds(ids)` → `ordering` modülü bunu kullanacak
 - [ ] İlk unit testler (use case, in-memory repository ile)
 
