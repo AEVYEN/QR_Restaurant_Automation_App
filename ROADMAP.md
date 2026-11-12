@@ -354,7 +354,7 @@ apps/api/src/
 - [x] `GetMenuUseCase`
 - [x] Controller + route + validasyon
 - [x] Modülün `index.js`'inde dışarıya açılacak fonksiyonu tanımla: ör. `getProductsByIds(ids)` → `ordering` modülü bunu kullanacak
-- [ ] İlk unit testler (use case, in-memory repository ile)
+- [x] İlk unit testler (use case, in-memory repository ile)
 
 **✅ Bitti kriteri:** `GET /api/v1/menu` seed verisini kategorilere göre gruplanmış döndürüyor; testler geçiyor.
 
