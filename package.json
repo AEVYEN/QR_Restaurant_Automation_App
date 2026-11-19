@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "version": "1.0.0",
-  "description": "",
+  "description": "QR-based table ordering app built as a modular monolith with Fastify, PostgreSQL & Prisma",
   "scripts": {
     "lint": "eslint .",
     "test": "npm run test --workspaces --if-present",
