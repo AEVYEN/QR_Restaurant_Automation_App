@@ -19,3 +19,6 @@ Thumbs.db
 
 #Prisma generated client
 apps/api/src/generated/
+
+#Local planning notes (not published)
+ROADMAP.md

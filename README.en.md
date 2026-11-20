@@ -4,7 +4,7 @@
 
 A QR-based table ordering app. Customers build their order from the menu and enter their table number. The app generates a **QR code** for the order; a waiter scans it and confirms the order. Think of a self-service kiosk, brought to the table.
 
-> 🚧 **Work in progress.** The backend API is currently under development. The web interface and mobile app will come in later phases. See [ROADMAP.md](ROADMAP.md) (Turkish) for the detailed plan.
+> 🚧 **Work in progress.** The backend API is currently under development. The web interface and mobile app will come in later phases.
 
 ## Table of Contents
 
@@ -205,13 +205,10 @@ Unit tests cover use cases and entities without a database, using in-memory repo
 | 12    | Security & Deployment          | ⏳     |
 | 13    | Mobile (React Native)          | ⏳     |
 
-See [ROADMAP.md](ROADMAP.md) for details on every phase.
-
 ## Documentation
 
 The project documents are written in Turkish.
 
-- [ROADMAP.md](ROADMAP.md): Phases, tasks and decisions made
 - [docs/adr/](docs/adr/): Architecture Decision Records (database, backend framework, monorepo structure)
 - [docs/domain/business-rules.md](docs/domain/business-rules.md): Order business rules
 - [docs/domain/order-status-machine.md](docs/domain/order-status-machine.md): Order status state machine

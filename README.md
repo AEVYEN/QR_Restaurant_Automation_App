@@ -4,7 +4,7 @@
 
 QR tabanlı masadan sipariş uygulaması. Müşteri menüden siparişini oluşturur ve masa numarasını girer. Uygulama siparişe ait bir **QR kod** üretir; garson bu QR'ı okutup siparişi onaylar. Kiosk deneyiminin masaya taşınmış hali.
 
-> 🚧 **Geliştirme aşamasında.** Şu an backend API'si yazılıyor. Web arayüzü ve mobil uygulama sonraki fazlarda gelecek. Ayrıntılı plan için [ROADMAP.md](ROADMAP.md) dosyasına bakın.
+> 🚧 **Geliştirme aşamasında.** Şu an backend API'si yazılıyor. Web arayüzü ve mobil uygulama sonraki fazlarda gelecek.
 
 ## İçindekiler
 
@@ -205,11 +205,8 @@ Unit testler use case'leri ve entity'leri veritabanı olmadan, in-memory reposit
 | 12  | Güvenlik & Deployment       | ⏳    |
 | 13  | Mobil (React Native)        | ⏳    |
 
-Tüm fazların ayrıntıları için [ROADMAP.md](ROADMAP.md) dosyasına bakın.
-
 ## Dokümanlar
 
-- [ROADMAP.md](ROADMAP.md): Fazlar, görevler ve verilen kararlar
 - [docs/adr/](docs/adr/): Mimari karar kayıtları (veritabanı, backend framework, monorepo yapısı)
 - [docs/domain/business-rules.md](docs/domain/business-rules.md): Sipariş iş kuralları
 - [docs/domain/order-status-machine.md](docs/domain/order-status-machine.md): Sipariş durum makinesi
