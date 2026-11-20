@@ -77,8 +77,8 @@ docs/              # ADR'ler ve domain dokümanları
 ### 1. Projeyi indirin ve bağımlılıkları kurun
 
 ```bash
-git clone https://github.com/AEVYEN/QR_Restuarant_Automation_App.git
-cd QR_Restuarant_Automation_App
+git clone https://github.com/AEVYEN/QR_Restaurant_Automation_App.git
+cd QR_Restaurant_Automation_App
 npm install
 ```
 

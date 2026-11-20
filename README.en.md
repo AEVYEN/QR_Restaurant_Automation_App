@@ -77,8 +77,8 @@ docs/              # ADRs and domain documents
 ### 1. Clone the repository and install dependencies
 
 ```bash
-git clone https://github.com/AEVYEN/QR_Restuarant_Automation_App.git
-cd QR_Restuarant_Automation_App
+git clone https://github.com/AEVYEN/QR_Restaurant_Automation_App.git
+cd QR_Restaurant_Automation_App
 npm install
 ```
 
